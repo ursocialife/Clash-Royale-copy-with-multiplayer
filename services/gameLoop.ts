@@ -159,8 +159,8 @@ export const updateGame = (state: GameState, dt: number): GameState => {
     const newParticles = state.particles.map(p => ({ ...p })).filter(p => Date.now() - p.createdAt < p.duration);
 
     state.entities.forEach(entity => {
-        // Handle Death (except spells which manage their own life)
-        if (entity.hp <= 0 && entity.type !== CardType.SPELL) {
+        // Handle Death (except spells and towers which remain as ruins)
+        if (entity.hp <= 0 && entity.type !== CardType.SPELL && entity.type !== CardType.TOWER) {
             // Death Spawn Logic
             if (entity.defId === 'tombstone') {
                 spawnUnits('skeletons', 4, entity.side, entity.x, entity.y, entity.level, newEntities);
@@ -342,11 +342,17 @@ export const updateGame = (state: GameState, dt: number): GameState => {
              }
         }
 
-        if (entity.hp <= 0) return; // Don't add dead entities (spells or troops)
+        if (entity.hp <= 0 && entity.type !== CardType.TOWER) return; // Don't add dead non-tower entities
 
         // Clone entity for next frame
         const nextEntity = { ...entity };
         
+        // Skip all logic for dead towers (they are just rubble)
+        if (nextEntity.type === CardType.TOWER && nextEntity.hp <= 0) {
+            newEntities.push(nextEntity);
+            return;
+        }
+
         // Status Effects
         if (nextEntity.frozenTimer > 0) nextEntity.frozenTimer -= dt;
         if (nextEntity.stunTimer > 0) nextEntity.stunTimer -= dt;
@@ -422,32 +428,34 @@ export const updateGame = (state: GameState, dt: number): GameState => {
             // Find new target
             let bestTarget = null;
             let minDist = Infinity;
+            const SIGHT_RANGE = 20; // Maximum distance to "see" a target for non-building attackers
             
             enemies.forEach(e => {
                 if (nextEntity.stats.targets === 'BUILDING' && !e.stats.isBuilding) return;
                 if (nextEntity.stats.targets === 'GROUND' && e.stats.movementType === 'AIR') return;
                 
+                const d = getDistance(nextEntity, e);
+
                 // If I am a building (Tower), I can only target things within my range
                 if (nextEntity.stats.isBuilding) {
                     const reach = nextEntity.stats.range + getHitboxRadius(e) + getHitboxRadius(nextEntity) - 0.5;
-                    const d = getDistance(nextEntity, e);
-                    if (d > reach) return; // Skip out of range for buildings
-                    if (d < minDist) {
-                        minDist = d;
-                        bestTarget = e;
-                    }
+                    if (d > reach) return; 
                 } else {
-                    const d = getDistance(nextEntity, e);
-                    if (d < minDist) {
-                        minDist = d;
-                        bestTarget = e;
-                    }
+                    // Troop Sight Range Restriction:
+                    // Building attackers can "see" buildings from far away.
+                    // Standard troops should only lock on if within SIGHT_RANGE to prevent lane-wandering.
+                    if (nextEntity.stats.targets !== 'BUILDING' && !e.stats.isBuilding && d > SIGHT_RANGE) return;
+                }
+
+                if (d < minDist) {
+                    minDist = d;
+                    bestTarget = e;
                 }
             });
 
-            // Default to King/Princess if nothing found AND we are mobile
+            // Default to King/Princess if nothing found AND we are mobile and allowed to target buildings
             if (!bestTarget && !nextEntity.stats.isBuilding && (nextEntity.stats.targets === 'ALL' || nextEntity.stats.targets === 'BUILDING')) {
-                 const towers = enemies.filter(e => e.type === CardType.TOWER);
+                 const towers = enemies.filter(e => e.type === CardType.TOWER && e.hp > 0);
                  towers.forEach(t => {
                      const d = getDistance(nextEntity, t);
                      if (d < minDist) {
@@ -709,8 +717,8 @@ export const updateGame = (state: GameState, dt: number): GameState => {
         state.playerCrowns = 3;
     }
 
-    let currentPCrowns = 3 - newEntities.filter(e => e.side === PlayerSide.ENEMY && e.type === CardType.TOWER).length;
-    let currentECrowns = 3 - newEntities.filter(e => e.side === PlayerSide.PLAYER && e.type === CardType.TOWER).length;
+    let currentPCrowns = 3 - newEntities.filter(e => e.side === PlayerSide.ENEMY && e.type === CardType.TOWER && e.hp > 0).length;
+    let currentECrowns = 3 - newEntities.filter(e => e.side === PlayerSide.PLAYER && e.type === CardType.TOWER && e.hp > 0).length;
 
     // Sudden Death Rule
     if (state.gameMode === 'SUDDEN_DEATH' && !gameOver) {

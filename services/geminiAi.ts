@@ -3,9 +3,8 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { GameState, GameEntity, PlayerSide, CardDef, CardType } from "../types";
 import { CARDS } from "../constants";
 
-// Safe API Key access for browser environment
-const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : '';
-const ai = new GoogleGenAI({ apiKey });
+// Fix: Strictly adhering to initialization guidelines for process.env.API_KEY
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 

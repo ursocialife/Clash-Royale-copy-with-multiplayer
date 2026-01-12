@@ -1,4 +1,3 @@
-
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { GameEntity, PlayerSide, CardType, ActiveEmote, GameProjectile, GameParticle, MovementType, PlayerCollection } from '../types';
 import { UnitModel } from './UnitModels';
@@ -143,8 +142,8 @@ const EntityComponent: React.FC<{ entity: GameEntity, aspectRatio: number }> = (
         visualOpacityClass = isEnemy ? 'opacity-0' : 'opacity-50 grayscale';
     }
 
-    // Status Bar Logic
-    const showStatusBar = !isDeploying && (entity.hp < entity.maxHp || entity.type === CardType.TOWER);
+    // Status Bar Logic - Hide when dead (especially for rubble towers)
+    const showStatusBar = !isDeploying && entity.hp > 0 && (entity.hp < entity.maxHp || entity.type === CardType.TOWER);
 
     return (
       <div
@@ -217,6 +216,7 @@ const EntityComponent: React.FC<{ entity: GameEntity, aspectRatio: number }> = (
                 isCharging={entity.isCharging}
                 hasShield={entity.shieldHp > 0}
                 isInvisible={entity.isInvisible}
+                isDestroyed={entity.type === CardType.TOWER && entity.hp <= 0}
             />
         </div>
       </div>
@@ -355,8 +355,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       setMousePos({ x: snappedX, y: snappedY });
   };
 
-  const leftTowerAlive = entities.some(e => e.side === PlayerSide.ENEMY && e.defId === 'tower_princess' && e.x < 50);
-  const rightTowerAlive = entities.some(e => e.side === PlayerSide.ENEMY && e.defId === 'tower_princess' && e.x > 50);
+  const leftTowerAlive = entities.some(e => e.side === PlayerSide.ENEMY && e.defId === 'tower_princess' && e.x < 50 && e.hp > 0);
+  const rightTowerAlive = entities.some(e => e.side === PlayerSide.ENEMY && e.defId === 'tower_princess' && e.x > 50 && e.hp > 0);
 
   const checkPlacementValidity = (x: number, y: number, cardId: string | null) => {
       if (!cardId) return false;

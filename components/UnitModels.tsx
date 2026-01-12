@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PlayerSide } from '../types';
 
@@ -13,9 +12,10 @@ interface UnitModelProps {
   isCharging?: boolean; 
   hasShield?: boolean; 
   isInvisible?: boolean; 
+  isDestroyed?: boolean;
 }
 
-export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "w-full h-full", flashing = false, variant = 'unit', facing = 'front', action = 'IDLE', isCharging = false, hasShield = false, isInvisible = false }) => {
+export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "w-full h-full", flashing = false, variant = 'unit', facing = 'front', action = 'IDLE', isCharging = false, hasShield = false, isInvisible = false, isDestroyed = false }) => {
   const isPlayer = side === PlayerSide.PLAYER || side === 'PLAYER';
   
   const colors = {
@@ -140,7 +140,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
 
       return (
           <g transform={`translate(${x}, ${y}) scale(${s})`} filter={filter} opacity={opacity}>
-              {/* Legs */}
               {!isGhost ? (
                   <>
                     <path d="M-8 30 L-8 40 L-12 40 L-10 30" fill="#4b5563" stroke="black" strokeWidth="1" />
@@ -149,33 +148,24 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               ) : (
                   <path d="M-10 25 Q-5 45 0 35 Q5 45 10 25 L10 20 L-10 20 Z" fill={finalArmor} stroke="black" strokeWidth="1" opacity="0.8" />
               )}
-
-              {/* Body */}
               <path d="M-14 -2 L14 -2 L12 28 L-12 28 Z" fill={finalArmor} stroke="black" strokeWidth="1.5" />
-              
-              {/* Shoulders */}
               <circle cx="-16" cy="5" r="5" fill={finalArmor} stroke="black" strokeWidth="1" />
               <circle cx="16" cy="5" r="5" fill={finalArmor} stroke="black" strokeWidth="1" />
               <rect x="-18" y="5" width="4" height="15" fill={skinFill} transform="rotate(10 -16 5)" stroke="black" strokeWidth="0.5" />
               <rect x="14" y="5" width="4" height="15" fill={skinFill} transform="rotate(-10 16 5)" stroke="black" strokeWidth="0.5" />
-
               {!isGhost && (
                   <>
                     <rect x="-13" y="24" width="26" height="6" fill="#451a03" rx="1" stroke="black" strokeWidth="0.5" />
                     <rect x="-3" y="24" width="6" height="6" fill="url(#um_goldGrad)" />
                   </>
               )}
-
-              {/* Head */}
               <circle cx="0" cy="-10" r="13" fill={skinFill} stroke="black" strokeWidth="1.5" />
-              
               {!isBack && hat !== 'bucket' && (
                   <g>
                     <ellipse cx="-4" cy="-12" rx="1.5" ry="2" fill="black" />
                     <ellipse cx="4" cy="-12" rx="1.5" ry="2" fill="black" />
                     <path d="M-7 -16 L-2 -15" stroke="black" strokeWidth="1" strokeLinecap="round" />
                     <path d="M7 -16 L2 -15" stroke="black" strokeWidth="1" strokeLinecap="round" />
-                    
                     {hasBeard && <path d="M-10 -5 Q0 10 10 -5 L10 2 Q0 18 -10 2 Z" fill={hairColor} stroke="black" strokeWidth="0.5" />}
                     {skinColor === colors.goblin && (
                         <g>
@@ -186,7 +176,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                     )}
                   </g>
               )}
-
               {hat === 'helmet' && (
                   <g>
                       <path d="M-14 -12 Q0 -32 14 -12 L14 -8 L-14 -8 Z" fill="url(#um_metalGrad)" stroke="black" />
@@ -218,7 +207,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                       <path d="M14 -12 L14 10" stroke={hairColor} strokeWidth="2" />
                   </g>
               )}
-
               <g className={isAttacking ? 'animate-pulse' : ''} transform={isAttacking ? 'rotate(-20)' : ''}>
                   {weapon === 'sword' && (
                       <g transform="translate(16, 0) rotate(-15)">
@@ -301,7 +289,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               <line x1="-8" y1="15" x2="8" y2="15" stroke="black" strokeWidth="1" />
               <line x1="0" y1="25" x2="0" y2="35" stroke="black" strokeWidth="2" /> 
               <circle cx="0" cy="-5" r="11" fill="white" stroke="black" /> 
-              
               {!isBack && (
                   <g>
                       <circle cx="-4" cy="-4" r="2.5" fill="black" />
@@ -314,7 +301,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               )}
               {hat === 'ushanka' && <rect x="-13" y="-16" width="26" height="14" fill="#713f12" rx="2" stroke="black" />}
               {hat === 'hood' && <path d="M-13 -8 Q0 -24 13 -8 L13 5 Q0 12 -13 5 Z" fill={colors.purple} stroke="black" />}
-              
               {weapon === 'sword' && (
                   <rect x="8" y="0" width="4" height="25" fill="url(#um_metalGrad)" stroke="black" transform="rotate(-15)" />
               )}
@@ -339,7 +325,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
        const { type, color = '#374151' } = config;
        const s = scale;
        const armorFill = type === 'pekka' ? 'url(#um_darkMetalGrad)' : (type === 'mk' ? '#111827' : color);
-       
        return (
            <g transform={`translate(${x}, ${y}) scale(${s})`} filter="url(#um_dropShadow)">
                <path d="M-22 -10 L22 -10 L18 40 L-18 40 Z" fill={type === 'golem' ? 'url(#um_stonePattern)' : armorFill} stroke="black" strokeWidth="2" />
@@ -452,6 +437,23 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
       x = 50, y = 50, scale = 1
   ) => {
       const s = scale;
+      if (isDestroyed) {
+          return (
+              <g transform={`translate(${x}, ${y}) scale(${s})`} filter="url(#um_dropShadow)">
+                  <path d="M-22 5 L22 5 L28 15 L-28 15 Z" fill="url(#um_stonePattern)" stroke="black" strokeWidth="1.5" />
+                  <path d="M-15 -5 L15 -5 L20 8 L-20 8 Z" fill="url(#um_stonePattern)" stroke="black" strokeWidth="1.5" />
+                  <rect x="-10" y="-8" width="12" height="10" rx="2" fill="url(#um_stonePattern)" stroke="black" transform="rotate(-20)" />
+                  <rect x="5" y="-12" width="14" height="12" rx="2" fill="url(#um_stonePattern)" stroke="black" transform="rotate(15)" />
+                  <rect x="-25" y="0" width="10" height="8" rx="2" fill="url(#um_stonePattern)" stroke="black" transform="rotate(45)" />
+                  <g className="animate-pulse opacity-60">
+                      <circle cx="-10" cy="-15" r="4" fill="#4b5563" />
+                      <circle cx="8" cy="-22" r="6" fill="#4b5563" />
+                      <circle cx="0" cy="-28" r="3" fill="#4b5563" />
+                  </g>
+                  <path d="M-12 10 L5 12 L0 15 Z" fill={teamColorFill} opacity="0.7" stroke="black" strokeWidth="0.5" />
+              </g>
+          );
+      }
       
       const renderBase = () => (
           <g>
@@ -463,7 +465,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               <rect x="-24" y="-42" width="48" height="4" fill="#57534e" /> 
           </g>
       );
-
       const renderKingBase = () => (
           <g>
               <path d="M-35 -20 L35 -20 L40 15 L-40 15 Z" fill="url(#um_stonePattern)" stroke="black" strokeWidth="2" />
@@ -474,7 +475,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               <rect x="-25" y="-45" width="50" height="25" fill="#44403c" stroke="black" />
           </g>
       );
-
       const renderFrontWall = () => (
           <g>
               <path d="M-25 -40 L-25 -48 L-15 -48 L-15 -40 L-5 -40 L-5 -48 L5 -48 L5 -40 L15 -40 L15 -48 L25 -48 L25 -40" 
@@ -482,7 +482,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
               <path d="M-25 -40 L25 -40" stroke="white" strokeWidth="1" opacity="0.3" />
           </g>
       );
-
       const renderKingFront = () => (
           <g>
               <path d="M-15 -25 L15 -25 L20 -15 L-20 -15 Z" fill="#1f2937" stroke="black" />
@@ -490,20 +489,17 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                     fill="url(#um_stonePattern)" stroke="black" strokeWidth="2" />
           </g>
       );
-
       return (
           <g transform={`translate(${x}, ${y}) scale(${s})`} filter="url(#um_dropShadow)">
               {type === 'princess' && (
                   <>
                       {renderBase()}
-                      {/* Explicitly passing 0,0 for local centering inside the translated group */}
                       <g transform="translate(0, -45)">
                           {renderHumanoid({ hat: 'crown', weapon: 'bow', isFemale: true, size: 0.85, armorColor: colors.gold }, 0, 0)}
                       </g>
                       {renderFrontWall()}
                   </>
               )}
-
               {type === 'king' && (
                   <>
                       {renderKingBase()}
@@ -517,7 +513,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                       {renderKingFront()}
                   </>
               )}
-
               {type === 'cannoneer' && (
                   <>
                       {renderBase()}
@@ -578,7 +573,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
       const { type, color = colors.main, armor = false } = config;
       const s = scale;
       const wingY = isMoving ? -5 : 0;
-      
       return (
           <g transform={`translate(${x}, ${y}) scale(${s})`} filter="url(#um_dropShadow)">
               <g className={isMoving ? "animate-pulse" : ""}>
@@ -653,7 +647,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
              'skeleton_army': { count: 5, renderer: () => renderSkeleton({}, 0, 0, 0.5) },
              'skeletondragons': { count: 2, renderer: () => renderFlyer({type: 'dragon', color: '#e2e8f0'}, 0, 0, 0.8) },
          };
-
          if (swarms[defId]) {
              const swarm = swarms[defId];
              return (
@@ -671,12 +664,10 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
              );
          }
     }
-
     switch (defId) {
         case 'tower_princess': return renderTower('princess');
         case 'king_tower': return renderTower('king');
         case 'tower_cannoneer': return renderTower('cannoneer');
-
         case 'knight': return renderHumanoid({ weapon: 'sword', hat: 'none', hasBeard: false });
         case 'archers': return renderHumanoid({ weapon: 'bow', hat: 'hood', isFemale: true });
         case 'giant': return renderHumanoid({ size: 1.5, weapon: 'none', armorColor: '#92400e' });
@@ -697,10 +688,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                              <circle cx="3" cy="2" r="1.5" fill="black" opacity="0.6" />
                              <path d="M-8 0 Q-14 -5 -12 5" fill="#fff" stroke="black" strokeWidth="0.5" />
                              <path d="M8 0 Q14 -5 12 5" fill="#fff" stroke="black" strokeWidth="0.5" />
-                             <circle cx="-8" cy="-5" r="2" fill="white" stroke="black"><circle cx="0.5" cy="0" r="0.5" fill="black"/></circle>
-                             <circle cx="8" cy="-5" r="2" fill="white" stroke="black"><circle cx="-0.5" cy="0" r="0.5" fill="black"/></circle>
-                             <path d="M-12 -8 L-18 -15 L-10 -12" fill="#fca5a5" stroke="black" />
-                             <path d="M12 -8 L18 -15 L10 -12" fill="#fca5a5" stroke="black" />
                          </g>
                      )}
                  </g>
@@ -713,14 +700,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                      <rect x="-12" y="5" width="6" height="10" rx="2" fill="#a8a29e" stroke="black" />
                      <rect x="6" y="5" width="6" height="10" rx="2" fill="#a8a29e" stroke="black" />
                      <rect x="-15" y="-10" width="30" height="20" rx="8" fill={teamColorFill} stroke="black" /> 
-                     <rect x="-12" y="-10" width="24" height="20" rx="4" fill="#a8a29e" stroke="black" /> 
-                     {!isBack && (
-                         <g transform="translate(0, 2)">
-                             <ellipse cx="0" cy="-5" rx="8" ry="12" fill="#a8a29e" stroke="black" />
-                             <circle cx="-4" cy="-8" r="1.5" fill="black" />
-                             <circle cx="4" cy="-8" r="1.5" fill="black" />
-                         </g>
-                     )}
                  </g>
                  {renderHumanoid({ weapon: 'lance', hat: 'none', skinColor: colors.skin, size: 0.9, armorColor: colors.main }, 0, -5)}
             </g>
@@ -731,22 +710,8 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                      <rect x="-12" y="5" width="6" height="10" rx="2" fill="#57534e" stroke="black" />
                      <rect x="6" y="5" width="6" height="10" rx="2" fill="#57534e" stroke="black" />
                      <rect x="-15" y="-10" width="30" height="20" rx="8" fill="#1f2937" stroke="black" /> 
-                     <rect x="-12" y="-10" width="24" height="20" rx="4" fill="#57534e" stroke="black" />
-                     {!isBack && (
-                         <g transform="translate(0, 2)">
-                             <ellipse cx="0" cy="-5" rx="8" ry="12" fill="#57534e" stroke="black" />
-                             <circle cx="-4" cy="-8" r="1.5" fill="white" /> <circle cx="-4" cy="-8" r="0.5" fill="black" />
-                             <circle cx="4" cy="-8" r="1.5" fill="white" /> <circle cx="4" cy="-8" r="0.5" fill="black" />
-                         </g>
-                     )}
                  </g>
                  {renderHumanoid({ weapon: 'mace', hat: 'bucket', armorColor: '#1f2937', size: 0.9 }, 0, -5)}
-                 {(hasShield || variant === 'card') && (
-                     <g transform="translate(-10, 0)">
-                         <circle cx="0" cy="0" r="12" fill="url(#um_metalGrad)" stroke="black" strokeWidth="2" />
-                         <circle cx="0" cy="0" r="4" fill="#1f2937" />
-                     </g>
-                 )}
             </g>
         );
         case 'miner': return renderHumanoid({ weapon: 'axe', hat: 'helmet', hasBeard: true });
@@ -757,11 +722,8 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
         case 'lumberjack': return (
             <g>
                 {renderHumanoid({ weapon: 'axe', hat: 'ushanka', hasBeard: true, armorColor: colors.purple })}
-                {/* Rage Bottle in left hand */}
                 <g transform="translate(32, 55) rotate(-10)" filter="url(#um_dropShadow)">
                     <rect x="0" y="0" width="8" height="12" rx="2" fill="url(#um_magicGrad)" stroke="black" strokeWidth="1" />
-                    <rect x="2" y="-3" width="4" height="3" fill="#581c87" stroke="black" strokeWidth="1" />
-                    <circle cx="4" cy="6" r="2.5" fill="#f3e8ff" opacity="0.6" />
                 </g>
             </g>
         );
@@ -771,30 +733,18 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
         case 'royalghost': return renderHumanoid({ weapon: 'sword', hat: 'crown', skinColor: '#bfdbfe', armorColor: '#bfdbfe', isGhost: true });
         case 'barbarians': return renderHumanoid({ weapon: 'sword', hat: 'none', hasBeard: true, hairColor: '#facc15' });
         case 'elitebarbarians': return renderHumanoid({ weapon: 'sword', hat: 'helmet', hasBeard: true });
-
-        // --- GOBLINS ---
         case 'goblins': return renderHumanoid({ skinColor: colors.goblin, weapon: 'sword', size: 0.8 });
         case 'spear_goblins': return renderHumanoid({ skinColor: colors.goblin, weapon: 'spear', size: 0.8 });
         case 'dartgoblin': return renderHumanoid({ skinColor: colors.goblin, weapon: 'none', hat: 'hood', size: 0.8 });
-
-        // --- UNDEAD ---
         case 'skeletons':
         case 'skeleton_army': return renderSkeleton({});
         case 'bomber': return renderSkeleton({ weapon: 'bomb', hat: 'ushanka' });
-        case 'guards': return (
-            <g>
-                {renderSkeleton({ weapon: 'shield', hat: 'helmet' })}
-            </g>
-        );
-
-        // --- HEAVY / CONSTRUCTS ---
+        case 'guards': return renderSkeleton({ weapon: 'shield', hat: 'helmet' });
         case 'pekka': return renderConstruct({ type: 'pekka' });
         case 'minipekka': return renderConstruct({ type: 'pekka' }, 50, 50, 0.7);
         case 'golem': return renderConstruct({ type: 'golem' });
         case 'icegolem': return renderConstruct({ type: 'golem', color: '#cffafe' });
         case 'megaknight': return renderConstruct({ type: 'mk' });
-
-        // --- FLYING ---
         case 'minions': return renderFlyer({ type: 'minion' });
         case 'megaminion': return renderFlyer({ type: 'minion', armor: true }, 50, 50, 1.3);
         case 'bats': return renderFlyer({ type: 'bat' });
@@ -804,15 +754,10 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
         case 'balloon': return (
             <g transform="translate(50, 50)" filter="url(#um_dropShadow)">
                 <circle cx="0" cy="-20" r="25" fill="#ef4444" stroke="black" />
-                <path d="M-20 -20 Q0 -40 20 -20" stroke="#b91c1c" strokeWidth="2" fill="none" />
                 <rect x="-8" y="10" width="16" height="12" fill="url(#um_woodPattern)" stroke="black" />
-                <path d="M-8 10 L-10 -5 M8 10 L10 -5" stroke="black" strokeWidth="1" />
-                <circle cx="-5" cy="-25" r="5" fill="white" opacity="0.3" />
                 {renderSkeleton({ size: 0.5 }, 0, 15)}
             </g>
         );
-
-        // --- BUILDINGS ---
         case 'cannon': return renderBuilding({ type: 'standard' });
         case 'tesla': return renderBuilding({ type: 'tesla' });
         case 'infernotower': return renderBuilding({ type: 'inferno' });
@@ -823,13 +768,9 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                 <rect x="-15" y="10" width="30" height="20" fill="url(#um_woodPattern)" stroke="black" />
                 <circle cx="-15" cy="30" r="8" fill="#1f2937" stroke="black" />
                 <circle cx="15" cy="30" r="8" fill="#1f2937" stroke="black" />
-                <g transform="translate(0, -10)">
-                    {renderBuilding({ type: 'standard' }, 0, 0, 0.8)}
-                </g>
+                <g transform="translate(0, -10)">{renderBuilding({ type: 'standard' }, 0, 0, 0.8)}</g>
             </g>
         );
-
-        // --- SPELLS ---
         case 'rage': return renderSpell({ type: 'bottle', color: '#a855f7' });
         case 'poison': return renderSpell({ type: 'bottle', color: '#ea580c' });
         case 'freeze': return renderSpell({ type: 'bottle', color: '#22d3ee' });
@@ -837,7 +778,6 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
         case 'arrows': return (
             <g transform="translate(50, 50)">
                 <path d="M-10 -10 L0 10 L10 -10" stroke="#b91c1c" strokeWidth="2" fill="none" />
-                <path d="M-5 0 L0 15 L5 0" stroke="#b91c1c" strokeWidth="2" fill="none" />
             </g>
         );
         case 'zap': return <path d="M40 20 L60 50 L50 50 L70 80" stroke="#0ea5e9" strokeWidth="4" fill="none" transform="translate(-10, -10)" />;
@@ -845,33 +785,19 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
         case 'rocket': return (
             <g transform="translate(50, 50) rotate(-45)">
                 <path d="M-10 0 L10 0 L10 30 L-10 30 Z" fill="#b91c1c" stroke="black" />
-                <path d="M-10 0 L0 -15 L10 0 Z" fill="#ef4444" stroke="black" />
                 <circle cx="0" cy="15" r="5" fill="#facc15" />
-            </g>
-        );
-        case 'vines': return <path d="M30 80 Q50 20 70 80" stroke="#15803d" strokeWidth="3" fill="none" />;
-
-        // --- OTHER / UNKNOWN ---
-        case 'icegolem': return renderConstruct({ type: 'golem', color: '#cffafe' }, 50, 50, 0.8);
-        case 'bowler': return (
-            <g>
-                {renderHumanoid({ skinColor: '#6d28d9', size: 1.2 })}
-                <circle cx="30" cy="65" r="12" fill="url(#um_stonePattern)" stroke="black" />
             </g>
         );
         case 'icespirit': return (
             <g transform="translate(50, 50)">
                 <circle cx="0" cy="0" r="10" fill="url(#um_iceGrad)" stroke="#22d3ee" />
                 <circle cx="-3" cy="-2" r="1.5" fill="black" /> <circle cx="3" cy="-2" r="1.5" fill="black" />
-                <path d="M-2 2 Q0 4 2 2" stroke="black" strokeWidth="1" fill="none" />
-                <path d="M-12 0 L-18 -5 L-14 -8 M12 0 L18 -5 L14 -8" stroke="#ecfeff" strokeWidth="2" />
             </g>
         );
         case 'electrospirit': return (
             <g transform="translate(50, 50)">
                 <circle cx="0" cy="0" r="10" fill="#67e8f9" stroke="#0891b2" />
                 <path d="M-5 -15 L0 -10 L5 -15" stroke="#facc15" strokeWidth="2" fill="none" />
-                <circle cx="-3" cy="-2" r="1.5" fill="black" /> <circle cx="3" cy="-2" r="1.5" fill="black" />
             </g>
         );
         case 'battleram': return (
@@ -881,8 +807,7 @@ export const UnitModel: React.FC<UnitModelProps> = ({ defId, side, className = "
                 {renderHumanoid({ hat: 'none', weapon: 'none' }, 15, 0, 0.7)}
             </g>
         );
-
-        default: return renderHumanoid({}); // Fallback
+        default: return renderHumanoid({}); 
     }
   };
 
