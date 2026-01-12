@@ -125,7 +125,7 @@ export interface GameProjectile {
   areaRadius: number;
   ownerSide: PlayerSide;
   arcHeight?: number;
-  effect?: 'FREEZE' | 'POISON' | 'RAGE' | 'LOG' | 'GOBLIN_BARREL';
+  effect?: 'FREEZE' | 'POISON' | 'RAGE' | 'LOG' | 'GOBLIN_BARREL' | 'STUN';
 }
 
 export interface GameParticle {

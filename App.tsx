@@ -10,7 +10,7 @@ import { ElixirBar } from './components/ElixirBar';
 import { ChestModal } from './components/ChestModal';
 import { ClaimModal } from './components/ClaimModal';
 import { MysteryBoxModal } from './components/MysteryBoxModal';
-import { playMenuTransitionSound, initAudio, playButtonSound, startMusic, stopMusic, playItemRevealSound, setMusicEnabled, setSfxEnabled, playLevelUpSound } from './services/audio';
+import { playMenuTransitionSound, initAudio, playButtonSound, startMusic, stopMusic, playItemRevealSound, setMusicEnabled, setSfxEnabled, playLevelUpSound, setMusicTempo } from './services/audio';
 import { GameState, PlayerSide, CardDef, CardType, ShopItem, ChestResult, TrophyReward, KingReward, PlayerCollection, MovementType, TargetType, GameEntity, ChestType, RewardType, GameMode, MultiplayerRole, MPMessage } from './types';
 import { 
   CARDS, TOWERS, ARENAS, TICK_RATE, TOWER_STATS, PRINCESS_TOWER_HP, KING_TOWER_HP,
@@ -445,6 +445,15 @@ const App: React.FC = () => {
         }
     }, [view, musicEnabled]);
 
+    // --- EFFECT: Music Tempo Logic ---
+    useEffect(() => {
+        if (gameState) {
+            setMusicTempo(gameState.phase === 'OVERTIME');
+        } else {
+            setMusicTempo(false);
+        }
+    }, [gameState?.phase]);
+
     // --- EFFECT: Multiplayer Listeners ---
     useEffect(() => {
         const unsub = mpService.onMessage((msg) => {
@@ -615,6 +624,7 @@ const App: React.FC = () => {
 
             let animationFrameId: number;
             let lastTime = Date.now();
+            let lastBroadcast = 0; // Throttle broadcasts
 
             const loop = () => {
                 const now = Date.now();
@@ -648,8 +658,13 @@ const App: React.FC = () => {
                         }
                     } else if (mpRole === 'HOST') {
                         // Broadcast state to Guest
-                        // Throttle broadcasts slightly? For now send every frame for smoothness in local
-                        mpService.send({ type: 'UPDATE', state: nextState });
+                        // Throttle broadcasts to ~15 FPS to prevent lag and disconnects
+                        if (now - lastBroadcast > 66) { 
+                            // Clone and strip unnecessary data for the guest
+                            const { aiHand, aiDeckCycle, aiNextMoveTime, ...stateToSend } = nextState;
+                            mpService.send({ type: 'UPDATE', state: stateToSend as GameState });
+                            lastBroadcast = now;
+                        }
                     }
 
                     return nextState;

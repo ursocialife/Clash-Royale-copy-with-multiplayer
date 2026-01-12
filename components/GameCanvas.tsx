@@ -4,6 +4,7 @@ import { GameEntity, PlayerSide, CardType, ActiveEmote, GameProjectile, GamePart
 import { UnitModel } from './UnitModels';
 import { getArenaBackgroundStyle, getArenaEffects, ArenaDecorations } from './ArenaVisuals';
 import { CARDS, getSpawnPattern, RARITY_INFO } from '../constants';
+import { playAttackSound, playTowerDestroySound } from '../services/audio';
 
 const TRAVELING_SPELLS = ['fireball', 'arrows', 'rocket', 'poison', 'rage', 'freeze', 'snowball', 'goblinbarrel'];
 
@@ -282,6 +283,10 @@ const ProjectileComponent: React.FC<{ projectile: GameProjectile, aspectRatio: n
                 );
             case 'magic': 
                 return <div className="w-3 h-3 rounded-full bg-purple-500 shadow-[0_0_8px_#a855f7] border border-white"></div>;
+            case 'icespirit': 
+                return <div className="w-4 h-4 rounded-full bg-cyan-300 border border-cyan-500 shadow-[0_0_5px_#22d3ee]"></div>;
+            case 'electrospirit': 
+                return <div className="w-4 h-4 rounded-full bg-cyan-400 border border-blue-500 shadow-[0_0_5px_#facc15] animate-pulse"></div>;
             default: 
                 return <div className="w-2 h-2 rounded-full bg-black"></div>;
         }
@@ -331,6 +336,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const arenaRef = useRef<HTMLDivElement>(null);
   const [arenaAspectRatio, setArenaAspectRatio] = useState(0.56); 
   const [mousePos, setMousePos] = useState<{x: number, y: number} | null>(null);
+  
+  // Track destroyed towers for sound
+  const deadTowerCount = useRef(0);
+  useEffect(() => {
+      const currentDead = entities.filter(e => e.type === CardType.TOWER && e.hp <= 0).length;
+      if (currentDead > deadTowerCount.current) {
+          playTowerDestroySound();
+      }
+      deadTowerCount.current = currentDead;
+  }, [entities]);
 
   useEffect(() => {
     const updateRatio = () => {
@@ -429,6 +444,18 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       }
       return tiles;
   }, [selectedCardId, leftTowerAlive, rightTowerAlive]);
+
+  // Trigger attack sounds when entities are in ATTACKING state
+  useEffect(() => {
+    entities.forEach(e => {
+        if (e.state === 'ATTACKING' && e.deployTimer <= 0) {
+            const now = Date.now();
+            if (now - e.lastAttackTime < 50) {
+                playAttackSound(e.defId);
+            }
+        }
+    });
+  }, [entities]);
 
   return (
     <div 

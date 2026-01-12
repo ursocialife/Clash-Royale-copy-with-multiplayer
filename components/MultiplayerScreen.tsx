@@ -72,7 +72,7 @@ export const MultiplayerScreen: React.FC<MultiplayerScreenProps> = ({ onStartHos
     return (
         <div className="flex flex-col h-full bg-gray-900 text-white p-4 overflow-y-auto pb-24">
             <h1 className="text-3xl font-black uppercase italic tracking-widest text-center mb-8 text-blue-400 drop-shadow-md">
-                Battle Arena
+                Multiplayer
             </h1>
 
             {errorMessage && (

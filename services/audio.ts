@@ -7,6 +7,7 @@ let audioCtx: AudioContext | null = null;
 // --- SETTINGS STATE ---
 let isMusicEnabled = true;
 let isSfxEnabled = true;
+let isFastTempo = false;
 
 export const setMusicEnabled = (enabled: boolean) => {
     isMusicEnabled = enabled;
@@ -17,6 +18,10 @@ export const setMusicEnabled = (enabled: boolean) => {
 
 export const setSfxEnabled = (enabled: boolean) => {
     isSfxEnabled = enabled;
+};
+
+export const setMusicTempo = (fast: boolean) => {
+    isFastTempo = fast;
 };
 
 // --- MUSIC ENGINE STATE ---
@@ -125,73 +130,84 @@ const generateBattleTrack = (): StepData[] => {
         { melody: 'F5', bass: 'D2' }, {}, { melody: 'D5' }, {}
     ];
 
+    // New Motif E (F Major/D Minor Variation)
+    const motifE = [
+        { melody: 'F4', bass: 'F2' }, { melody: 'A4' }, { melody: 'C5' }, { melody: 'F5' },
+        { melody: 'C5', bass: 'F2' }, { melody: 'A4' }, { melody: 'G4' }, { melody: 'F4' }
+    ];
+
     let track: StepData[] = [];
 
-    // --- ARRANGEMENT (Target ~56 bars) ---
+    // --- ARRANGEMENT (Target > 3 mins, ~120 bars) ---
 
     // 1. INTRO (4 Bars)
-    // Subtle start
     track.push(...merge(drumIntro, [{bass:'D2'},{},{},{},{bass:'D2'},{},{},{}])); 
     track.push(...merge(drumIntro, [{bass:'D2'},{},{},{},{bass:'D2'},{},{},{}])); 
     track.push(...merge(drumBasic, [{bass:'A1'},{},{},{},{bass:'A1'},{},{},{}]));
     track.push(...merge(drumRoll, [{bass:'A1'},{},{},{},{bass:'A1'},{},{},{}]));
 
-    // 2. THEME A (8 Bars)
+    // 2. EXPOSITION (16 Bars) - Themes A & B
     track.push(...merge(drumBasic, motifA));
     track.push(...merge(drumBasic, motifA));
     track.push(...merge(drumBasic, motifB));
+    track.push(...merge(drumBasic, motifB));
+    track.push(...merge(drumBasic, motifA));
+    track.push(...merge(drumBasic, motifA));
     track.push(...merge(drumBasic, motifC));
-    track.push(...merge(drumBasic, motifA));
-    track.push(...merge(drumBasic, motifA));
-    track.push(...merge(drumBasic, motifD)); // Build tension
+    track.push(...merge(drumRoll, motifC));
+
+    // 3. DEVELOPMENT (16 Bars) - Themes C, D, E
+    track.push(...merge(drumBasic, motifC));
+    track.push(...merge(drumBasic, motifC));
+    track.push(...merge(drumBasic, motifD));
+    track.push(...merge(drumBasic, motifD));
+    track.push(...merge(drumHeavy, motifE));
+    track.push(...merge(drumHeavy, motifE));
+    track.push(...merge(drumHeavy, motifA));
     track.push(...merge(drumRoll, motifD));
 
-    // 3. VARIATION (8 Bars)
-    // Higher octave, fuller drums
-    const motifA_High = motifA.map(s => s.melody ? ({...s, melody: s.melody.replace('4','5').replace('2','2')}) : s); // Simple octave shift logic won't work with string replace perfectly for all notes but okay for this set
-    track.push(...merge(drumHeavy, motifHighA));
-    track.push(...merge(drumHeavy, motifHighA));
+    // 4. BREAKDOWN (16 Bars) - Low intensity, building back up
+    const bassRun = [{bass:'D2'},{},{bass:'F2'},{},{bass:'E2'},{},{bass:'D2'},{}];
+    for(let i=0; i<4; i++) track.push(...merge(drumIntro, bassRun));
+    
+    // 5. BUILD UP (16 Bars) - Arpeggios and rising tension
+    const arp = [{harmony:['F3','A3']},{harmony:['D3']},{harmony:['A3']},{harmony:['F3']}, {harmony:['D3']},{},{},{}];
+    for(let i=0; i<2; i++) track.push(...merge(drumBasic, arp));
+    for(let i=0; i<2; i++) track.push(...merge(drumRoll, arp));
+
+    // 6. CLIMAX 1 (16 Bars) - Full motifs
+    track.push(...merge(drumHeavy, motifA));
     track.push(...merge(drumHeavy, motifB));
     track.push(...merge(drumHeavy, motifC));
-    track.push(...merge(drumHeavy, motifA));
-    track.push(...merge(drumHeavy, motifA));
     track.push(...merge(drumHeavy, motifD));
+    track.push(...merge(drumHeavy, motifA));
+    track.push(...merge(drumHeavy, motifB));
+    track.push(...merge(drumHeavy, motifE));
     track.push(...merge(drumRoll, motifD));
 
-    // 4. BREAKDOWN (8 Bars)
-    // Sparse, focus on bass
-    const bassRun = [{bass:'D2'},{},{bass:'F2'},{},{bass:'E2'},{},{bass:'D2'},{}];
-    track.push(...merge(drumIntro, bassRun));
-    track.push(...merge(drumIntro, bassRun));
-    track.push(...merge(drumIntro, bassRun));
-    track.push(...merge(drumIntro, bassRun));
-    // Arpeggios entering
-    const arp = [{harmony:['F3','A3']},{harmony:['D3']},{harmony:['A3']},{harmony:['F3']}, {harmony:['D3']},{},{},{}];
-    track.push(...merge(drumBasic, arp));
-    track.push(...merge(drumBasic, arp));
-    track.push(...merge(drumBasic, arp));
-    track.push(...merge(drumRoll, arp));
-
-    // 5. CLIMAX (16 Bars)
-    // Full power
-    for(let i=0; i<2; i++) {
-        track.push(...merge(drumHeavy, motifA));
-        track.push(...merge(drumHeavy, motifB));
-        track.push(...merge(drumHeavy, motifC));
-        track.push(...merge(drumHeavy, motifD));
-    }
-    for(let i=0; i<2; i++) {
+    // 7. HIGH ENERGY SOLO (16 Bars) - HighA motifs
+    for(let k=0; k<2; k++) {
+        track.push(...merge(drumHeavy, motifHighA));
         track.push(...merge(drumHeavy, motifHighA));
         track.push(...merge(drumHeavy, motifB));
-        track.push(...merge(drumHeavy, motifC));
-        track.push(...merge(drumHeavy, motifD));
+        track.push(...merge(drumRoll, motifC));
     }
 
-    // 6. OUTRO (4 Bars)
+    // 8. FINAL CLIMAX (16 Bars) - Everything
+    track.push(...merge(drumHeavy, motifA));
+    track.push(...merge(drumHeavy, motifE));
+    track.push(...merge(drumHeavy, motifHighA));
+    track.push(...merge(drumHeavy, motifD));
+    track.push(...merge(drumHeavy, motifA));
+    track.push(...merge(drumHeavy, motifB));
+    track.push(...merge(drumHeavy, motifC));
+    track.push(...merge(drumRoll, motifD));
+
+    // 9. OUTRO (4 Bars)
     track.push(...merge(drumBasic, motifA));
     track.push(...merge(drumBasic, motifA));
-    track.push(...merge(drumBasic, [{bass:'D2', melody:'D4'},{},{},{},{},{},{},{}]));
     track.push(...merge(drumSilence, [{bass:'D1', melody:'D3'},{},{},{},{},{},{},{}]));
+    track.push(...merge(drumSilence, [{},{},{},{},{},{},{},{}]));
 
     return track;
 };
@@ -333,7 +349,9 @@ const scheduleNextStep = () => {
     // Lookahead logic
     while (nextNoteTime < ctx.currentTime + 0.2) {
         const sequence = currentTrackType === 'MENU' ? MENU_SEQ : BATTLE_SEQ;
-        const bpm = currentTrackType === 'MENU' ? 120 : 140;
+        const baseBpm = currentTrackType === 'MENU' ? 120 : 140;
+        const bpm = isFastTempo && currentTrackType === 'BATTLE' ? 180 : baseBpm;
+        
         const secondsPerStep = 60 / (bpm * 2); // 8th notes
 
         const step = sequence[currentStep];
@@ -559,4 +577,55 @@ export const playLevelUpSound = () => {
     notes.forEach((freq, i) => {
          playOscillator(ctx, 'triangle', freq, freq, ctx.currentTime + (i * 0.1), 0.1, 0.2);
     });
+};
+
+export const playTowerDestroySound = () => {
+    if (!isSfxEnabled) return;
+    const ctx = initAudio();
+    if (!ctx) return;
+    const t = ctx.currentTime;
+    
+    // Low Boom (Impact)
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.frequency.setValueAtTime(150, t);
+    osc.frequency.exponentialRampToValueAtTime(10, t + 0.6);
+    osc.type = 'square';
+    
+    gain.gain.setValueAtTime(0.5, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.6);
+    
+    // Lowpass to muffle the square wave
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(200, t);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start(t);
+    osc.stop(t + 0.6);
+    
+    // Crumble Noise (Debris)
+    const bufferSize = ctx.sampleRate * 0.8;
+    const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+    
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const nGain = ctx.createGain();
+    const nFilter = ctx.createBiquadFilter();
+    nFilter.type = 'lowpass';
+    nFilter.frequency.setValueAtTime(800, t);
+    nFilter.frequency.linearRampToValueAtTime(100, t + 0.8);
+    
+    nGain.gain.setValueAtTime(0.4, t);
+    nGain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+    
+    noise.connect(nFilter);
+    nFilter.connect(nGain);
+    nGain.connect(ctx.destination);
+    noise.start(t);
 };

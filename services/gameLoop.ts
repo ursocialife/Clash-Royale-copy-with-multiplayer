@@ -318,8 +318,13 @@ export const updateGame = (state: GameState, dt: number): GameState => {
              // DURATION (Poison, Rage, Freeze)
              else if (['poison', 'rage', 'freeze'].includes(entity.defId)) {
                  if (entity.hp === 1) { // Init duration (using HP as timer ticks)
-                     entity.hp = 240; // ~8 seconds @ 30fps
-                     entity.maxHp = 240; 
+                     if (entity.defId === 'freeze') {
+                         entity.hp = 120; // 4 seconds @ 30fps
+                         entity.maxHp = 120;
+                     } else {
+                         entity.hp = 240; // ~8 seconds @ 30fps
+                         entity.maxHp = 240;
+                     }
                  }
                  entity.hp -= 1; // Decrement life
                  
@@ -450,12 +455,32 @@ export const updateGame = (state: GameState, dt: number): GameState => {
                  target = undefined;
                  nextEntity.targetId = null;
              }
-             else if (target.type === CardType.TOWER && nextEntity.stats.targets !== 'BUILDING') {
-                 // Switch if tower targeted but troop is closer
-                 let closerThreat = enemies.find(e => e.type !== CardType.TOWER && getDistance(nextEntity, e) < 6 && getDistance(nextEntity, e) < dist);
-                 if (closerThreat && ((nextEntity.stats.targets === 'GROUND' && closerThreat.stats.movementType === 'GROUND') || nextEntity.stats.targets === 'ALL')) {
-                     target = closerThreat;
-                     nextEntity.targetId = closerThreat.id;
+             // RETARGETING LOGIC
+             // "target the nearest entity unless already attacking"
+             // If not attacking and not a building-targeting unit, scan for closer threats
+             else if (nextEntity.state !== 'ATTACKING' && nextEntity.stats.targets !== 'BUILDING' && !nextEntity.stats.isBuilding) {
+                 const AGGRO_RANGE = 8; // Range to notice new threats while moving
+                 let bestNewTarget: GameEntity | null = null;
+                 let bestDist = dist;
+
+                 for (const enemy of enemies) {
+                     if (enemy.id === target!.id) continue;
+                     
+                     // Filter valid targets
+                     if (nextEntity.stats.targets === 'GROUND' && enemy.stats.movementType === 'AIR') continue;
+                     
+                     const d = getDistance(nextEntity, enemy);
+                     
+                     // Switch if we find a target significantly closer and within aggro range
+                     if (d < bestDist && d <= AGGRO_RANGE) {
+                         bestDist = d;
+                         bestNewTarget = enemy;
+                     }
+                 }
+
+                 if (bestNewTarget) {
+                     target = bestNewTarget;
+                     nextEntity.targetId = bestNewTarget.id;
                  }
              }
         } 
@@ -522,12 +547,20 @@ export const updateGame = (state: GameState, dt: number): GameState => {
                     nextEntity.lastAttackTime = now;
                     const dmg = nextEntity.stats.damage * (nextEntity.rageTimer > 0 ? 1.35 : 1);
                     
+                    const isSpirit = ['icespirit', 'electrospirit'].includes(nextEntity.defId);
+
                     // Threshold set to 5.5 to distinguish extended melee (4.5 like Knight) from ranged (6.0 like Minions)
                     if (range > 5.5) {
                         // Ranged
+                        let visualType = nextEntity.defId.includes('wizard') ? 'fireball' : (nextEntity.defId.includes('witch') ? 'magic' : (nextEntity.defId.includes('dragon') ? 'fireball' : 'arrow'));
+                        
+                        // Spirit Visuals
+                        if (nextEntity.defId === 'icespirit') visualType = 'icespirit';
+                        if (nextEntity.defId === 'electrospirit') visualType = 'electrospirit';
+
                         newProjectiles.push({
                             id: generateId(),
-                            visualType: nextEntity.defId.includes('wizard') ? 'fireball' : (nextEntity.defId.includes('witch') ? 'magic' : (nextEntity.defId.includes('dragon') ? 'fireball' : 'arrow')),
+                            visualType: visualType,
                             startX: nextEntity.x, startY: nextEntity.y,
                             destX: target.x, destY: target.y,
                             x: nextEntity.x, y: nextEntity.y,
@@ -537,7 +570,8 @@ export const updateGame = (state: GameState, dt: number): GameState => {
                             areaRadius: nextEntity.stats.radius || 0,
                             ownerSide: nextEntity.side,
                             arcHeight: 5,
-                            progress: 0
+                            progress: 0,
+                            effect: nextEntity.defId === 'icespirit' ? 'FREEZE' : (nextEntity.defId === 'electrospirit' ? 'STUN' : undefined)
                         });
                     } else {
                         // Melee
@@ -549,6 +583,11 @@ export const updateGame = (state: GameState, dt: number): GameState => {
                         }
                         
                         newParticles.push({id: generateId(), x: target.x, y: target.y, type: 'hit', color: '#fff', size: 2, createdAt: now, duration: 200});
+                    }
+
+                    // Spirits commit suicide after attack
+                    if (isSpirit) {
+                        nextEntity.hp = 0;
                     }
                 }
             } else {
@@ -722,9 +761,15 @@ export const updateGame = (state: GameState, dt: number): GameState => {
                         if (p.effect === 'LOG') {
                             e.x += (p.ownerSide === PlayerSide.PLAYER ? 0 : 0); // Knockback?
                         }
+                        if (p.effect === 'FREEZE') {
+                            e.frozenTimer = 1000;
+                        }
+                        if (p.effect === 'STUN') {
+                            e.stunTimer = 500;
+                        }
                     }
                 });
-                newParticles.push({id: generateId(), x: p.x, y: p.y, type: 'explosion', color: '#f97316', size: p.areaRadius*2, createdAt: now, duration: 300});
+                newParticles.push({id: generateId(), x: p.x, y: p.y, type: 'explosion', color: p.effect === 'FREEZE' ? '#22d3ee' : '#f97316', size: p.areaRadius*2, createdAt: now, duration: 300});
             } else if (target) {
                 // Single Target
                 applyDamage(target, p.damage);
